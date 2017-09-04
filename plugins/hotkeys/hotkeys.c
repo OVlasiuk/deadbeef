@@ -813,12 +813,66 @@ action_toggle_stop_after_album_cb (struct DB_plugin_action_s *action, int ctx) {
     return 0;
 }
 
+int
+action_move_cursor_up_cb (struct DB_plugin_action_s *action, int ctx) {
+    deadbeef->pl_lock ();
+    int cursor = deadbeef->pl_get_cursor (PL_MAIN);
+    DB_playItem_t *it = deadbeef->pl_get_for_idx (cursor);
+    deadbeef->pl_set_selected(it, 0);
+    DB_playItem_t *prev = deadbeef->pl_get_prev (it, PL_MAIN);
+    deadbeef->pl_set_selected(prev, 1);
+    int prev_cursor = deadbeef->pl_get_idx_of_iter (prev, PL_MAIN);
+    deadbeef->pl_set_cursor (PL_MAIN, prev_cursor);
+
+    deadbeef->pl_item_unref (it);
+    deadbeef->pl_item_unref (prev);
+    deadbeef->pl_unlock ();
+    deadbeef->sendmessage (DB_EV_PLAYLISTCHANGED, 0, DDB_PLAYLIST_CHANGE_SELECTION, 0);
+    deadbeef->sendmessage (DB_EV_FOCUS_SELECTION, 0, 0, 0);
+    return 0;
+}
+
+int
+action_move_cursor_down_cb (struct DB_plugin_action_s *action, int ctx) {
+    deadbeef->pl_lock ();
+    int cursor = deadbeef->pl_get_cursor (PL_MAIN);
+    DB_playItem_t *it = deadbeef->pl_get_for_idx (cursor);
+    deadbeef->pl_set_selected(it, 0);
+    DB_playItem_t *next = deadbeef->pl_get_next (it, PL_MAIN);
+    deadbeef->pl_set_selected(next, 1);
+    int prev_cursor = deadbeef->pl_get_idx_of_iter (next, PL_MAIN);
+    deadbeef->pl_set_cursor (PL_MAIN, prev_cursor);
+
+    deadbeef->pl_item_unref (it);
+    deadbeef->pl_item_unref (next);
+    deadbeef->pl_unlock ();
+    deadbeef->sendmessage (DB_EV_PLAYLISTCHANGED, 0, DDB_PLAYLIST_CHANGE_SELECTION, 0);
+    deadbeef->sendmessage (DB_EV_FOCUS_SELECTION, 0, 0, 0);
+    return 0;
+}
+
+static DB_plugin_action_t action_move_cursor_down = {
+    .title = "Move Cursor Down",
+    .name = "move_cursor_down",
+    .flags = DB_ACTION_COMMON,
+    .callback2 = action_move_cursor_down_cb,
+    .next = NULL
+};
+
+static DB_plugin_action_t action_move_cursor_up = {
+    .title = "Move Cursor Up",
+    .name = "move_cursor_up",
+    .flags = DB_ACTION_COMMON,
+    .callback2 = action_move_cursor_up_cb,
+    .next = &action_move_cursor_down
+};
+
 static DB_plugin_action_t action_reload_metadata = {
     .title = "Reload Metadata",
     .name = "reload_metadata",
     .flags = DB_ACTION_MULTIPLE_TRACKS,
     .callback2 = action_reload_metadata_handler,
-    .next = NULL
+    .next = &action_move_cursor_up
 };
 
 static DB_plugin_action_t action_jump_to_current = {
