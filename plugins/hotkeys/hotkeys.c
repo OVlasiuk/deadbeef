@@ -815,39 +815,45 @@ action_toggle_stop_after_album_cb (struct DB_plugin_action_s *action, int ctx) {
 
 int
 action_move_cursor_up_cb (struct DB_plugin_action_s *action, int ctx) {
-    deadbeef->pl_lock ();
     int cursor = deadbeef->pl_get_cursor (PL_MAIN);
     DB_playItem_t *it = deadbeef->pl_get_for_idx (cursor);
-    deadbeef->pl_set_selected(it, 0);
     DB_playItem_t *prev = deadbeef->pl_get_prev (it, PL_MAIN);
-    deadbeef->pl_set_selected(prev, 1);
-    int prev_cursor = deadbeef->pl_get_idx_of_iter (prev, PL_MAIN);
-    deadbeef->pl_set_cursor (PL_MAIN, prev_cursor);
+    if(prev)
+    {
+        deadbeef->pl_lock ();
+        deadbeef->pl_set_selected(it, 0);
+        deadbeef->pl_set_selected(prev, 1);
+        int prev_cursor = deadbeef->pl_get_idx_of_iter (prev, PL_MAIN);
+        deadbeef->pl_set_cursor (PL_MAIN, prev_cursor);
+        deadbeef->pl_item_unref (prev);
+        deadbeef->sendmessage (DB_EV_PLAYLISTCHANGED, 0, DDB_PLAYLIST_CHANGE_SELECTION, 0);
+        deadbeef->sendmessage (DB_EV_FOCUS_SELECTION, 0, 0, 0);
+        deadbeef->pl_unlock ();
+    }
 
     deadbeef->pl_item_unref (it);
-    deadbeef->pl_item_unref (prev);
-    deadbeef->pl_unlock ();
-    deadbeef->sendmessage (DB_EV_PLAYLISTCHANGED, 0, DDB_PLAYLIST_CHANGE_SELECTION, 0);
-    deadbeef->sendmessage (DB_EV_FOCUS_SELECTION, 0, 0, 0);
     return 0;
 }
 
 int
 action_move_cursor_down_cb (struct DB_plugin_action_s *action, int ctx) {
-    deadbeef->pl_lock ();
     int cursor = deadbeef->pl_get_cursor (PL_MAIN);
     DB_playItem_t *it = deadbeef->pl_get_for_idx (cursor);
-    deadbeef->pl_set_selected(it, 0);
     DB_playItem_t *next = deadbeef->pl_get_next (it, PL_MAIN);
-    deadbeef->pl_set_selected(next, 1);
-    int prev_cursor = deadbeef->pl_get_idx_of_iter (next, PL_MAIN);
-    deadbeef->pl_set_cursor (PL_MAIN, prev_cursor);
+    if(next)
+    {
+        deadbeef->pl_lock ();
+        deadbeef->pl_set_selected(it, 0);
+        deadbeef->pl_set_selected(next, 1);
+        int next_cursor = deadbeef->pl_get_idx_of_iter (next, PL_MAIN);
+        deadbeef->pl_set_cursor (PL_MAIN, next_cursor);
+        deadbeef->pl_item_unref (next);
+        deadbeef->sendmessage (DB_EV_PLAYLISTCHANGED, 0, DDB_PLAYLIST_CHANGE_SELECTION, 0);
+        deadbeef->sendmessage (DB_EV_FOCUS_SELECTION, 0, 0, 0);
+        deadbeef->pl_unlock ();
+    }
 
     deadbeef->pl_item_unref (it);
-    deadbeef->pl_item_unref (next);
-    deadbeef->pl_unlock ();
-    deadbeef->sendmessage (DB_EV_PLAYLISTCHANGED, 0, DDB_PLAYLIST_CHANGE_SELECTION, 0);
-    deadbeef->sendmessage (DB_EV_FOCUS_SELECTION, 0, 0, 0);
     return 0;
 }
 
